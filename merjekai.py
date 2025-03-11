@@ -22,7 +22,7 @@ def main():
 
     # ✅ **Fetch First 10,000 Documents from MongoDB**
     documents = list(collection.find(
-        {"Prompts": {"$ne": "", "$ne": "PROCESSING_FAILED", "$ne": "INSUFFICIENT_TEXT", "$ne": "PROCESSING_ERROR"}},
+        {"Prompts": {"$ne": [], "$ne": "", "$ne": "PROCESSING_FAILED", "$ne": "INSUFFICIENT_TEXT", "$ne": "PROCESSING_ERROR"}},
         {"Label": 1, "Prompts": 1, "URL": 1}
     ).limit(10000))
 
@@ -33,9 +33,8 @@ def main():
     # ✅ **Convert MongoDB Data to Pandas DataFrame**
     data = []
     for doc in documents:
-        if "Prompts" in doc and isinstance(doc["Prompts"], str) and doc["Prompts"].strip():
-            prompts = doc["Prompts"].split(";")
-            for prompt in prompts:
+        if "Prompts" in doc and isinstance(doc["Prompts"], list):  # Handle array format
+            for prompt in doc["Prompts"]:
                 prompt = prompt.strip()
                 if prompt:  # Only add non-empty prompts
                     data.append({
@@ -50,7 +49,7 @@ def main():
         print("❌ DataFrame is empty, no valid data to train the model.")
         exit()
 
-    print(f"✅ Loaded {len(df)} valid prompts from the first 1000 documents.")
+    print(f"✅ Loaded {len(df)} valid prompts from the first 10,000 documents.")
 
     # ✅ **Train-Test Split (80/20)**
     train_df, val_df = train_test_split(df, test_size=0.2, random_state=42)
@@ -122,7 +121,7 @@ def main():
         learning_rate=2e-5,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
-        num_train_epochs=3,
+        num_train_epochs=5,
         weight_decay=0.01,
         dataloader_num_workers=8 if is_cluster else 4,
         report_to=[],

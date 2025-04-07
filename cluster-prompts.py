@@ -18,9 +18,24 @@ BATCH_SIZE = 100  # Process in small batches to avoid cursor timeouts
 
 def generate_prompts_with_ollama(text):
     try:
-        prompt = f"""
-        You are extracting **up to 40 highly relevant search queries** from the given text...
-        """
+             prompt = f"""
+        You are extracting **up to 40 highly relevant search queries** from the given text. **Do not summarize, analyze, or paraphrase.**  
+
+### **Instructions:**  
+- Each query must be **1-8 words long** and relate to the **"University of Memphis."**  
+- Queries should be **keywords, short questions, or phrases** (not full sentences).  
+- **Strictly separate each query with a semicolon (;)** on a single line.  
+- **Do not add newlines, explanations, numbers, or extra formatting.**  
+
+### **Text to Process:**  
+{text}  
+
+### **Output Format (Example):**  
+University of Memphis computer science; University of Memphis AI research; University of Memphis admission requirements; University of Memphis data science program  
+
+### **Your Output:**  
+(Ensure queries are in one single line, semicolon-separated, no newlines)  
+"""
         output = ollama.generate(model=OLLAMA_MODEL_NAME, prompt=prompt)
         response = output.get('response', "").strip()
         return response.replace("\n", " ").strip() if response else ""
